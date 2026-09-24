@@ -20,6 +20,7 @@ proof, not a competitor to language models: the replies are short, simple and sl
 - Demo: https://talktojev.com
 - Paper (PDF, citable): https://doi.org/10.5281/zenodo.22940945 (also at https://talktojev.com/paper.pdf)
 - Code: https://github.com/xucian/talktojev (archived: https://doi.org/10.5281/zenodo.22895303)
+- The full architecture diagram, which Figure 1 abridges: https://github.com/xucian/talktojev/blob/main/ARCHITECTURE.md
 - Jev on X: https://x.com/jevprime
 - What is Jev: https://typesafe.ai/blog/introducing-system-one-models-and-jev
 

@@ -129,7 +129,7 @@ across? For each tool: would it help to look this up? \\
 sentence & What does the next sentence do (\Moves{} moves: answer, give a reason, admit, disagree,
 \ldots), who or what is it about, how much does it carry? Is the reply complete? \\
 word & Which word comes next: one of \GrammarWords{} function words, one of the user's own words, a
-number, the end of the sentence, or one of \Categories{} kinds of content word? If a kind: which
+number, the end of the sentence, or one of \ContentCategories{} kinds of content word? If a kind: which
 word of that kind? \\
 word, unsure & Of the top candidates, each imagined one word further, which continuation is best? \\
 character & For a number: which digit comes next, or is the number complete? \\
@@ -178,7 +178,7 @@ what do they seem to want, which of my sentences said something about me? \\
 % one word
 \node[plab, anchor=north west] (wtitle) at ([xshift=12mm]move.north east) {word loop, one candidate sentence};
 \node[box, below=1.5mm of wtitle.south west, anchor=north west] (state) {\textbf{state}\\ the conversation; the thought, in the first person, built from the decisions so far; the reply so far};
-\node[box, below=of state] (word) {\textbf{next word}, and \textbf{listen}\calls{one call, two questions}\\ which word comes next: one of \GrammarWords{} function words, each shown as the phrase it would complete; one of the user's own words; one of \Categories{} kinds of content word; a number; the end of the sentence. and: is the reply so far flowing, complete, or lost? (complete or lost ends the candidate)};
+\node[box, below=of state] (word) {\textbf{next word}, and \textbf{listen}\calls{one call, two questions}\\ which word comes next: one of \GrammarWords{} function words, each shown as the phrase it would complete; one of the user's own words; one of \ContentCategories{} kinds of content word; a number; the end of the sentence. and: is the reply so far flowing, complete, or lost? (complete or lost ends the candidate)};
 \node[box, below=of word] (look) {\textbf{unsure? look ahead}\calls{$k$ resolves, $k$ forwards, one judge}\\ resolve the top $k$ candidates, advance each by one word, ask which two-word continuation is best};
 \node[box, below=of look] (resolve) {\textbf{resolve}\calls{none, or one to two}\\ a function word or one of theirs is itself; a kind of word walks the vocabulary tree (\VocabWords{} words, depth at most two); a number is spelled one digit per call};
 \node[box, below=of resolve] (emit) {\textbf{emit}\calls{no call}\\ append the word; stop when a word repeats; on . ! ? the sentence is done};
