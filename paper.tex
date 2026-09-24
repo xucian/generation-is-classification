@@ -11,6 +11,8 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
 \usepackage{enumitem}
 \usepackage{etoolbox}
 \usepackage[numbers,sort&compress]{natbib}
@@ -27,9 +29,12 @@
 \raggedbottom
 \setlength{\emergencystretch}{1.5em}
 
+\newcommand{\PaperDOI}{10.5281/zenodo.22940945}
+\newcommand{\CodeDOI}{10.5281/zenodo.22895303}
 \title{\textbf{Generation is Classification}\\[4pt]
 \large A conversational agent built from a model that can only choose}
-\author{\input{author.txt}\\ \small Independent researcher \quad \small\url{https://talktojev.com}}
+\author{\input{author.txt}\\ \small Independent researcher \quad \small\url{https://talktojev.com}\\
+\small Preprint, \href{https://doi.org/\PaperDOI}{doi:\PaperDOI}}
 \date{September 2026}
 
 \begin{document}
@@ -47,8 +52,10 @@ what did not, as principles with the experiment behind each: option descriptions
 counts do not; everything on the page is imitated, as meaning, as words and as form; a repeated
 decision's winner is sticky while its distribution is not; and a decision must be asked at the grain
 where it lives. Against the first working version, the deployed system spends \DepCPWDrop\% fewer model
-calls per generated word, with longer replies and no empty ones. The claim is an existence proof, not
-a competitor to language models: the replies are short, simple and slow.
+calls per generated word, with longer replies and no empty ones. Three raters, blind to the system,
+scored the deployed and the first version alike (\HumanDepMean{} and \HumanBaseMean{} of 5) and random
+choice \HumanRandMean{}: the development bought cost and reliability, not perceived quality. The claim
+is an existence proof, not a competitor to language models: the replies are short, simple and slow.
 \end{abstract}
 
 \section{Introduction}
@@ -77,10 +84,11 @@ sentences are simple. We know of no other conversational agent in which nothing 
 with a memory written in the first person between the questions (Section~\ref{sec:method}).
 (2) Six principles for putting choices to a classifier, each with the experiment that established
 it, including the failures (Section~\ref{sec:principles}). (3) Measurements of cost and quality
-across the system's development (Section~\ref{sec:results}), and an honest account of the limits
+across the system's development, with a blind human rating (Section~\ref{sec:results}), and an honest account of the limits
 (Section~\ref{sec:limits}). The code is one implementation of the idea, written quickly; the paper
 describes the idea and does not depend on the code's details. The code, the bench and every run
-file behind the numbers here will be released at \url{https://github.com/xucian/talktojev}.
+file behind the numbers here are released at \url{https://github.com/xucian/talktojev} and archived
+at \href{https://doi.org/\CodeDOI}{doi:\CodeDOI}.
 
 \section{The instrument}\label{sec:instrument}
 
@@ -102,7 +110,7 @@ returns a repeated answer, a fact that Section~\ref{sec:sticky} turns on.
 \section{Speaking by choosing}\label{sec:method}
 
 A reply is built by asking the classifier questions at several grains. Table~\ref{tab:grains} lists
-them. Nothing in the loop is a template or a phrase bank, and no rule chooses a word: when the
+them and Figure~\ref{fig:arch} draws one turn and one word. Nothing in the loop is a template or a phrase bank, and no rule chooses a word: when the
 agent says something wrong, the remedy is more information in the state or a better description of
 an option, never a directive. Rules do exist, and they are of two kinds. Some bound the loop: a cap
 on the length of a reply, a stop when the same word repeats, a trim of an unfinished last sentence,
@@ -132,6 +140,66 @@ what do they seem to want, which of my sentences said something about me? \\
 \caption{The grains at which the same primitive, a choice among described options, is asked.}
 \label{tab:grains}
 \end{table}
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize\sffamily,
+  box/.style={draw=black!70, rounded corners=2pt, align=left, inner sep=4pt, text width=6.4cm, fill=white},
+  panel/.style={draw=black!45, dashed, rounded corners=4pt, inner sep=3mm},
+  plab/.style={font=\scriptsize\sffamily\bfseries, text=black!60},
+  arr/.style={-{Stealth[length=4pt]}, semithick, draw=black!70},
+  lab/.style={font=\tiny\sffamily, text=black!60, fill=white, inner sep=1pt},
+  vlab/.style={lab, rotate=90, anchor=south},
+  node distance=2.5mm and 12mm]
+\newcommand{\calls}[1]{\hfill{\color{black!55}#1}}
+% one turn
+\node[box, dashed] (self) {\textbf{self}, kept between turns\\ mood; what they seem to want; what i have told them about myself};
+\node[box, below=of self] (perceive) {\textbf{perceive}\calls{one call}\\ what are they doing? how do i feel about it, and how should it come across? which part matters most? for each tool: would it help to look this up?};
+\node[box, below=of perceive] (length) {\textbf{plan}\calls{one call}\\ how much should i say? (what the tools returned is now in the state)};
+\node[box, below=of length] (move) {\textbf{next sentence}\calls{one call}\\ what does it do (\Moves{} moves), who or what is it about, how much does it carry? is the reply complete?};
+\node[box, below=of move] (cands) {\textbf{$K$ candidate sentences}, in parallel\calls{$K$ word loops}\\ each is the word loop on the right; the $i$-th candidate takes the $i$-th most probable subject};
+\node[box, below=of cands] (judge) {\textbf{judge}\calls{at most one call}\\ which candidate is most natural and adds the most? broken, repeating or lost candidates are dropped first};
+\node[box, below=of judge] (critique) {\textbf{critique}\calls{one call}\\ grammatical? relevant? natural? which sentence is weakest?};
+\node[box, below=of critique] (reflect) {\textbf{reflect}\calls{one call}\\ how do i feel now? what do they seem to want? which of my sentences said something about me?};
+\draw[arr] (self) -- (perceive);
+\draw[arr] (perceive) -- (length);
+\draw[arr] (length) -- (move);
+\draw[arr] (move) -- node[lab, right] {more} (cands);
+\draw[arr] (cands) -- (judge);
+\draw[arr] (judge.west) -- ++(-4mm,0) coordinate (a1) -- (a1 |- move.west) -- (move.west);
+\node[vlab] at ($(a1)!0.5!(a1 |- move.west)$) {append the winner; next sentence};
+\draw[arr] (move.west) -- ++(-8mm,0) coordinate (a2) -- (a2 |- critique.west) -- (critique.west);
+\node[vlab] at ($(a2)!0.5!(a2 |- critique.west)$) {complete};
+\draw[arr] (critique.west) -- ++(-12mm,0) coordinate (a3) -- (a3 |- move.west) -- (move.west);
+\node[vlab] at ($(a3)!0.5!(a3 |- move.west)$) {scored 3 or below: redo from the weakest sentence};
+\draw[arr] (reflect.west) -- ++(-16mm,0) coordinate (a4) -- (a4 |- self.west) -- (self.west);
+\node[vlab] at ($(a4)!0.5!(a4 |- self.west)$) {next turn};
+% one word
+\node[plab, anchor=north west] (wtitle) at ([xshift=12mm]move.north east) {word loop, one candidate sentence};
+\node[box, below=1.5mm of wtitle.south west, anchor=north west] (state) {\textbf{state}\\ the conversation; the thought, in the first person, built from the decisions so far; the reply so far};
+\node[box, below=of state] (word) {\textbf{next word}, and \textbf{listen}\calls{one call, two questions}\\ which word comes next: one of \GrammarWords{} function words, each shown as the phrase it would complete; one of the user's own words; one of \Categories{} kinds of content word; a number; the end of the sentence. and: is the reply so far flowing, complete, or lost? (complete or lost ends the candidate)};
+\node[box, below=of word] (look) {\textbf{unsure? look ahead}\calls{$k$ resolves, $k$ forwards, one judge}\\ resolve the top $k$ candidates, advance each by one word, ask which two-word continuation is best};
+\node[box, below=of look] (resolve) {\textbf{resolve}\calls{none, or one to two}\\ a function word or one of theirs is itself; a kind of word walks the vocabulary tree (\VocabWords{} words, depth at most two); a number is spelled one digit per call};
+\node[box, below=of resolve] (emit) {\textbf{emit}\calls{no call}\\ append the word; stop when a word repeats; on . ! ? the sentence is done};
+\draw[arr] (state) -- (word);
+\draw[arr] (word) -- node[lab, right] {unsure} (look);
+\draw[arr] (look) -- (resolve);
+\draw[arr] (resolve) -- (emit);
+\draw[arr] (word.east) -- ++(4mm,0) coordinate (b1) -- (b1 |- resolve.east) -- (resolve.east);
+\node[vlab] at ($(b1)!0.5!(b1 |- resolve.east)$) {sure};
+\draw[arr] (emit.west) -- ++(-4mm,0) coordinate (b2) -- (b2 |- state.west) -- (state.west);
+\node[vlab] at ($(b2)!0.5!(b2 |- state.west)$) {next word};
+\node[panel, fit=(wtitle) (state) (emit) (b1) (b2)] (wpanel) {};
+\draw[arr] (cands.east) -- (wpanel.west |- cands.east);
+\end{tikzpicture}
+\caption{One turn (left) and one word (right). Every box is one or more questions to the same
+classifier; the grey tag is the number of calls. A turn is a fixed number of decisions plus one word
+loop per word per candidate; the word loop is one call when the classifier is sure and a small
+search when it is not. The complete diagram, with every option list and the state as the classifier
+sees it, is \texttt{ARCHITECTURE.md} in the code repository.}
+\label{fig:arch}
+\end{figure*}
 
 \paragraph{The state is a mind.} Every answer is kept as a decision: the options, their
 descriptions, the winner and the probabilities. Before each new question the decisions made so far
@@ -296,8 +364,9 @@ version retries only from 3.}
 Calls per generated word fell by \DepCPWDrop\% and empty replies disappeared. Replies grew longer
 through the middle stages and shorter again in the deployed version, which ends a reply where the
 sentence-grain question says it is complete: \DepSent{} sentences per reply against \FinalSent{} the
-day before. The self-critique stayed flat, which we read as a ceiling of the measure rather than of
-the system: short replies score 6 almost always, and a longer reply has more room for one slip.
+day before. The self-critique stayed flat. We first read this as a ceiling of the measure, since
+short replies score 6 almost always and a longer reply has more room for one slip; the human ratings
+below say that perceived quality was flat too.
 
 \paragraph{The control.} The objection to the claim is that the humans wrote every word and the
 classifier only picks among them. We ran the same loop, the same option lists, the same rules, with
@@ -311,6 +380,39 @@ the last change we wrote \HeldN{} new prompts (\usr{my cat knocked over my coffe
 gravity to a child}, \usr{is pineapple on pizza ok?}) and ran the deployed system once: self-critique
 \HeldCrit{}, \HeldCalls{} calls per reply, \HeldEmpty{} empty, \HeldBelow{} of \HeldN{} first
 attempts below 5, against \DepCrit{} and \DepBelow{} of 24 on the tuned prompts.
+
+\begin{table}[t]
+\small\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+ & naturalness & relevance & picked as best \\
+\midrule
+first version & \HumanBaseNat & \HumanBaseRel & \PrefBase \\
+deployed & \HumanDepNat & \HumanDepRel & \PrefDep \\
+random choice & \HumanRandNat & \HumanRandRel & \\
+\bottomrule
+\end{tabular}
+\caption{Blind human ratings, 1 to 5, three raters, \HumanRatings{} ratings; the first version's empty
+replies count as 1 and 1. ``Picked as best'': how many times a rater chose this system's reply to a
+prompt over the other's (\PrefSame{} times neither).}
+\label{tab:human}
+\end{table}
+
+\paragraph{Human ratings.} Three raters rated every distinct reply of the first version and of the
+deployed version to the 24 prompts, and
+every third reply of the random control, for naturalness and for relevance on a scale of 1 to 5,
+without knowing which system had produced what, and picked the best reply to each prompt. The pack
+and the raters' sessions are in the repository. Table~\ref{tab:human} has the means. The deployed
+version is less natural than the first (\HumanDepNat{} against \HumanBaseNat{}) and slightly more
+relevant (\HumanDepRel{} against \HumanBaseRel{}), the same overall (\HumanDepMean{} against
+\HumanBaseMean{}), and the raters chose the first version's reply as best \PrefBase{} times and the
+deployed version's \PrefDep{} times. Random choice is at the floor (\HumanRandMean{}). The development in
+Table~\ref{tab:stages} therefore bought cost, length and reliability, not perceived quality: the
+first version's replies are shorter, and a short reply has less room to stumble; the deployed
+version's longer replies say more and slip more. The self-critique agrees with the human mean at
+$r = \HumanCritR$ over the individual ratings, so it is a usable proxy and a coarse one. The raters
+disagree with each other by \HumanSpread{} points on average on the same reply (the mean of the
+widest gap per reply), so with three raters differences under half a point should not be read.
 
 \subsection{Where the cost is}\label{sec:cost}
 
@@ -383,8 +485,10 @@ have love but not me.}), so such lines are now looked up only when the plan asks
 
 \paragraph{Measurement.} The quality score is the classifier judging its own output, it saturates on
 short replies, and it once gave 5 of 6 to a reply ending in \jev{done. done.} The random-choice
-control shows the score is not empty (it gives \CtrlCrit{} to word salad), but it cannot show that
-the score tracks what a person would prefer. We have no human evaluation yet. Most comparisons in Section~\ref{sec:principles} rest on four to eight prompts run
+control shows the score is not empty (it gives \CtrlCrit{} to word salad), and the human ratings
+track it at $r = \HumanCritR$; the same ratings put the deployed version no higher than the first, so
+the flat critique across Table~\ref{tab:stages} was the system, not the measure. Three raters are a
+small panel. Most comparisons in Section~\ref{sec:principles} rest on four to eight prompts run
 once; one elaborate prompt can vary threefold in cost between runs, so those comparisons can show
 large effects only, and we have tried to claim no others.
 

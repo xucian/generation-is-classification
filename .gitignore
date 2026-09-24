@@ -6,6 +6,7 @@
 *.log
 *.out
 *.synctex.gz
-main.pdf
+paper.pdf
 arxiv/
 arxiv.tar.gz
+.DS_Store
